@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Qoder specific
+*.qoder.site
+qoder-cache/
+
+# Build output (if any)
+dist/
+build/
+.deno/
+
+# Cache files
+.cache/
+*.cache
