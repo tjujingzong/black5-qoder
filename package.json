@@ -1,0 +1,14 @@
+{
+  "name": "black5-sites",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "挤黑五在线卡牌游戏 - Qoder Sites 版本",
+  "scripts": {
+    "dev": "node dev/local-server.mjs",
+    "check": "deno check functions/index.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

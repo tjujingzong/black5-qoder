@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>挤黑五 · 在线联机</title>
+<link rel="icon" href="/avatars/tiger.png" type="image/png">
+<link rel="stylesheet" href="css/style.css?v=20260813i">
+</head>
+<body>
+
+<!-- 首页：创建 / 加入房间 -->
+<section id="screen-home" class="screen home">
+  <div class="home-brand">
+    <div class="brand-mark" aria-hidden="true"><span>♠</span><b>5</b></div>
+    <div><h1>挤黑五</h1><p class="sub">在线牌局</p></div>
+  </div>
+  <div class="home-card" aria-label="进入牌局">
+    <label for="inp-name">昵称</label>
+    <input id="inp-name" maxlength="8" placeholder="输入你的昵称" autocomplete="nickname">
+    <button id="btn-create" class="primary big">创建房间</button>
+    <div class="divider"><span>加入已有房间</span></div>
+    <div class="join-row">
+      <input id="inp-code" maxlength="5" placeholder="5 位房间号" aria-label="房间号" autocomplete="off">
+      <button id="btn-join" class="big">加入</button>
+    </div>
+  </div>
+  <details class="rules">
+    <summary>游戏规则</summary>
+    <ul>
+      <li>一副牌去掉大小王共 52 张；庄家及其下家各多发 1 张，其余玩家依次少 1 张（人数不同自动调整，默认 5 人：11/11/10/10/10）。</li>
+      <li>持有<b>黑桃5</b>的玩家是庄家的秘密队友（"黑五"）；庄家自己拿到黑桃5则为<b>独庄</b>，独自对抗所有闲家。</li>
+      <li>逆时针出牌，庄家首出。牌型：单张、对子、3 张以上顺子、姊妹对（连对）、三张（炸弹）、四张（轰牌）。顺子允许 A-2-3、2-3-4、3-4-5；5 可以包含也可以在 4 与 6 之间跳过，但 2-3-5、K-A-2 不合法。</li>
+      <li>姊妹对（连对）只允许两组或三组对子，按 4、6、7…K、A 连续，2、3、5 不参与；例如 4-4-6-6、8-8-9-9-10-10，两组中 K-K-A-A 最大。</li>
+      <li>牌力从小到大为 4、6、7、8、9、10、J、Q、K、A、2、3、5；同牌型的 5 可以压 5。</li>
+      <li>压牌需同牌型同长度且牌力更大，或直接使用炸弹；轰牌 &gt; 炸弹 &gt; 普通牌型。黑五可选择适当时机"明牌"亮出身份。</li>
+      <li>每次出牌限时 20 秒；有牌可压时超时自动过牌，必须首出时自动打出最小单张。</li>
+      <li>头科所在阵营获胜；任一阵营全部出完时立即结束。每局按名次进行零和结算，全体玩家加减分之和始终为 0，独庄分数翻倍。</li>
+    </ul>
+  </details>
+</section>
+
+<!-- 房间页：大厅 / 对局 -->
+<section id="screen-room" class="screen hidden">
+  <header class="room-head">
+    <div class="rc room-ident"><span>房间</span><b id="room-code"></b>
+      <button id="btn-copy" class="mini copy-button" title="复制邀请链接"><span aria-hidden="true">⧉</span><em>复制邀请</em></button>
+    </div>
+    <div class="rc room-tools">
+      <button id="btn-voice" class="mini voice-toggle" aria-label="开启语音" title="开启语音" aria-pressed="false"><span>🎤</span><em>语音</em></button>
+      <button id="btn-music" class="mini sound-toggle music-toggle" aria-label="关闭背景音乐" title="关闭背景音乐" aria-pressed="true"><span>♫</span><em>BGM</em></button>
+      <button id="btn-effects" class="mini sound-toggle effects-toggle" aria-label="关闭牌局音效" title="关闭牌局音效" aria-pressed="true"><span>🔊</span><em>音效</em></button>
+      <button id="btn-leave" class="mini leave-button">离开</button>
+    </div>
+  </header>
+  <div id="room-body"></div>
+</section>
+
+<div id="toast"></div>
+<script type="module" src="js/main.js?v=20261012g"></script>
+</body>
+</html>
