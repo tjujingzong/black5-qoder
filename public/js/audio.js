@@ -1,4 +1,5 @@
 import { comboSpeech, speechLanguage } from './speech.js';
+import { icon as lineIcon } from './icons.js?v=20261109a';
 
 const AudioContextClass = globalThis.AudioContext || globalThis.webkitAudioContext;
 const LEGACY_AUDIO_KEY = 'jh5-audio-enabled';
@@ -233,8 +234,7 @@ class GameAudio {
   updateButtons() {
     if (this.musicButton) {
       const icon = this.musicButton.querySelector('span');
-      if (icon) icon.textContent = this.musicEnabled ? '♫' : '♪';
-      else this.musicButton.textContent = this.musicEnabled ? '♫' : '♪';
+      if (icon) icon.innerHTML = lineIcon('music');
       this.musicButton.classList.toggle('active', this.musicEnabled);
       this.musicButton.setAttribute('aria-pressed', String(this.musicEnabled));
       const track = MUSIC_TRACKS[this.currentTrack]?.title;
@@ -244,8 +244,7 @@ class GameAudio {
     }
     if (this.effectsButton) {
       const icon = this.effectsButton.querySelector('span');
-      if (icon) icon.textContent = this.effectsEnabled ? '🔊' : '🔇';
-      else this.effectsButton.textContent = this.effectsEnabled ? '🔊' : '🔇';
+      if (icon) icon.innerHTML = lineIcon(this.effectsEnabled ? 'volume' : 'volume-off');
       this.effectsButton.classList.toggle('active', this.effectsEnabled);
       this.effectsButton.setAttribute('aria-pressed', String(this.effectsEnabled));
       const label = this.effectsEnabled ? '关闭牌局音效' : '开启牌局音效';
@@ -520,9 +519,22 @@ class GameAudio {
       const current = this.lastState;
       if (this.turnReminderKey === key && current?.phase === 'playing'
         && current.turn === current.mine && current.turnStartedAt === startedAt) {
-        this.speak('轮到你出牌');
+        this.remindTurn();
       }
     }, remaining);
+  }
+
+  // 非音频的回合提醒：触觉震动 + 手牌区视觉闪烁（替代原先的“轮到你出牌”语音/音效）
+  remindTurn() {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try { navigator.vibrate([120, 60, 120]); } catch (e) { /* 忽略不支持的设备 */ }
+    }
+    const zone = document.querySelector('.self-zone.my-turn');
+    if (zone) {
+      zone.classList.remove('turn-flash');
+      void zone.offsetWidth; // 强制回流以重启动画
+      zone.classList.add('turn-flash');
+    }
   }
 
   cancelTurnReminder() {
@@ -569,9 +581,6 @@ class GameAudio {
     } else if (action?.type === 'blackFive') {
       this.play('blackFive');
       this.speak(action.text);
-    }
-    if (previous.turn !== next.turn && next.turn === next.mine && next.phase === 'playing') {
-      this.play('turn');
     }
     if (previous.phase !== 'roundEnd' && next.phase === 'roundEnd') this.play('result');
     else if (previous.phase !== 'playing' && next.phase === 'playing') this.play('start');

@@ -2,6 +2,7 @@
 import { classify, canBeat, findHint, posName } from './rules.js';
 import { SUITS, rankChar } from './cards.js';
 import { QUICK_PHRASES } from './engine.js';
+import { icon } from './icons.js?v=20261109a';
 
 let cur = null;          // 当前视图
 let send = () => {};     // 通过实时连接向权威房间服务发送动作
@@ -48,6 +49,11 @@ function tableCard(c) {
 /* ---------------- 事件绑定 ---------------- */
 
 export function init() {
+  let resizeFrame;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(() => { if (cur) render(cur); });
+  });
   document.getElementById('btn-copy').addEventListener('click', () => {
     const link = `${location.origin}${location.pathname}?room=${roomCode}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -62,7 +68,10 @@ export function init() {
     if (card) {
       const id = card.dataset.card;
       if (selected.has(id)) selected.delete(id); else selected.add(id);
-      if (cur) render(cur);
+      if (cur) {
+        render(cur);
+        [...document.querySelectorAll('[data-card]')].find(element => element.dataset.card === id)?.focus({ preventScroll: true });
+      }
       return;
     }
     const avatar = e.target.closest('[data-player-id]');
@@ -154,6 +163,8 @@ export function render(v) {
   cur = v;
   if (Number.isFinite(v.serverNow)) serverClockOffset = v.serverNow - Date.now();
   const chatWasFocused = document.activeElement?.matches?.('[data-chat-input]');
+  const focusedCardId = document.activeElement?.dataset?.card;
+  const handScrollLeft = document.querySelector('.hand')?.scrollLeft || 0;
   // 清理已不在手牌中的选中项
   const ids = new Set(v.myHand.map(c => c.id));
   for (const id of [...selected]) if (!ids.has(id)) selected.delete(id);
@@ -171,6 +182,10 @@ export function render(v) {
   }
   html += `<div class="support-grid">${chatHtml(v)}${logHtml(v)}</div>`;
   body.innerHTML = html;
+  const hand = body.querySelector('.hand');
+  if (hand) hand.scrollLeft = handScrollLeft;
+  if (focusedCardId) [...body.querySelectorAll('[data-card]')]
+    .find(element => element.dataset.card === focusedCardId)?.focus({ preventScroll: true });
   updateTurnClocks();
   const messages = body.querySelector('.chat-messages');
   if (messages) messages.scrollTop = messages.scrollHeight;
@@ -201,7 +216,7 @@ function lobbyHtml(v) {
        <p class="tip">等待房主开始游戏…</p>`;
   return `<div class="lobby">
     <div class="lobby-heading"><div><span class="eyebrow">牌局大厅</span><h2>等待玩家</h2></div><b>${v.players.length}<small> / ${v.maxPlayers}</small></b></div>
-    <div class="invite-strip"><span>房间号</span><strong>${esc(roomCode)}</strong><span>分享右上角邀请按钮</span></div>
+    <div class="invite-strip"><span>房间号</span><strong>${esc(roomCode)}</strong><span>复制邀请链接，邀朋友入座</span></div>
     <ul class="plist">${list}</ul>
     <div class="actions-col">${actions}</div>
   </div>`;
@@ -225,8 +240,12 @@ function gameHtml(v) {
   const myTurn = v.phase === 'playing' && v.turnSeat === v.mySeat;
   const clock = turnClockHtml(v, myTurn);
 
+  const pendingPlayer = v.pending ? v.players[v.pending.seat] : null;
   const center = v.pending
-    ? `<div class="trick-owner"><b>${seatName(v.pending.seat)}</b><span>${v.pending.name}</span></div>
+    ? `<div class="trick-owner">
+         ${pendingPlayer ? `<img class="trick-avatar" src="${avatarSrc(pendingPlayer.avatar)}" alt="">` : ''}
+         <b>${seatName(v.pending.seat)}</b><span>${v.pending.name}</span>
+       </div>
        <div class="table-cards">${v.pending.cards.map(tableCard).join('')}</div>`
     : `<div class="table-empty">${myTurn ? '由你首出' : `等待 ${seatName(v.turnSeat)} 出牌`}</div>`;
 
@@ -238,7 +257,7 @@ function gameHtml(v) {
   let secret = '';
   if (v.mySecret) {
     secret = v.mySecret.solo
-      ? '<div class="secret"><b>♠5</b> 你拿到了黑桃5 —— 本局独庄，独自对抗所有闲家！</div>'
+      ? '<div class="secret"><b>♠ 5</b> 本局独庄，独自对抗所有闲家</div>'
       : '<div class="secret"><b>♠5</b> 你是黑五（黑桃5持有者），是庄家的秘密队友，可择机明牌</div>';
   }
 
@@ -252,12 +271,12 @@ function gameHtml(v) {
     group.cards.push(card);
   }
   const hand = groupedHand.map(group => `
-    <div class="card-group" style="--group-size:${group.cards.length}">
+    <div class="card-group${group.cards.length > 1 ? ' stacked' : ''}" style="--group-size:${group.cards.length}">
       ${group.cards.map((card, index) => `
-        <div class="card${(card.suit === 1 || card.suit === 3) ? ' red' : ''}${selected.has(card.id) ? ' sel' : ''}"
-             data-card="${card.id}" style="--card-index:${index}" aria-label="${SUITS[card.suit]}${rankChar(card.rank)}">
+        <button class="card${(card.suit === 1 || card.suit === 3) ? ' red' : ''}${selected.has(card.id) ? ' sel' : ''}"
+             data-card="${card.id}" style="--card-index:${index}" aria-label="${SUITS[card.suit]}${rankChar(card.rank)}" aria-pressed="${selected.has(card.id)}">
           <span class="cr">${rankChar(card.rank)}</span><span class="cs">${SUITS[card.suit]}</span>
-        </div>`).join('')}
+        </button>`).join('')}
     </div>`).join('');
   const handMetrics = handLayout(groupedHand.length);
 
@@ -272,7 +291,7 @@ function gameHtml(v) {
       <div class="round-status${myTurn ? ' mine' : ''}"><small>当前</small><b>${status}</b></div>
     </div>
     ${scoreboardHtml(v)}
-    ${offline.length ? `<div class="banner">⚠ ${offline.map(p => esc(p.name)).join('、')} 掉线，等待重新连接…</div>` : ''}
+    ${offline.length ? `<div class="banner">${icon('alert')}${offline.map(p => esc(p.name)).join('、')} 掉线，等待重新连接…</div>` : ''}
     <div class="table-wrap">
       <div class="table-felt">
         ${chips}
@@ -283,7 +302,8 @@ function gameHtml(v) {
       </div>
     </div>
     ${secret}
-    <div class="self-zone">
+    <div class="self-zone${myTurn ? ' my-turn' : ''}">
+      <div class="hand-heading"><span>我的手牌 <b>${v.myHand.length}</b></span>${myTurn ? '<div class="turn-banner" role="status">轮到你出牌</div>' : '<span class="hand-tip">点选手牌，组合出牌</span>'}</div>
       <div class="self-profile">
         <img class="avatar-static" data-avatar-id="${esc(me.id)}" src="${avatarSrc(me.avatar)}" alt="">
         <span>${esc(me.name)}</span>${me.voice ? '<i class="voice-mark">语音中</i>' : ''}
@@ -328,8 +348,10 @@ function chipHtml(v, p, position) {
   const seat = v.players.indexOf(p);
   const la = v.lastActions[seat];
   const turn = v.phase === 'playing' && v.turnSeat === seat;
+  const owner = !!v.pending && v.pending.seat === seat;
   const cls = ['chip', position];
   if (turn) cls.push('turn');
+  if (owner) cls.push('owner');
   if (!p.connected) cls.push('off');
   if (p.outRank) cls.push('out');
   let tags = '';
@@ -344,7 +366,7 @@ function chipHtml(v, p, position) {
   const act = la
     ? (la.type === 'pass'
       ? `<span class="act pass">${la.timeout ? '超时过牌' : '过牌'}</span>`
-      : `<span class="act">${la.timeout ? '超时出牌' : '已出牌'}</span>`)
+      : `<span class="act play-act">${(la.cards || []).map(mini).join('')}${la.timeout ? '<i class="to">超时</i>' : ''}</span>`)
     : '';
   return `<div class="${cls.join(' ')}">
     <button class="avatar" data-player-id="${esc(p.id)}" data-avatar-id="${esc(p.id)}" aria-label="向${esc(p.name)}使用道具" title="向${esc(p.name)}使用道具"><img src="${avatarSrc(p.avatar)}" alt=""></button>
@@ -367,24 +389,24 @@ function propMenuHtml(v) {
   if (!target) return '';
   return `<div class="prop-menu" role="dialog" aria-label="互动道具">
     <span>送给 <b>${esc(target.name)}</b></span>
-    <button data-act="interact" data-to="${esc(target.id)}" data-item="tomato">🍅 番茄</button>
-    <button data-act="interact" data-to="${esc(target.id)}" data-item="bucket">🪣 水桶</button>
-    <button class="icon-close" data-act="closeProp" aria-label="关闭" title="关闭">×</button>
+    <button data-act="interact" data-to="${esc(target.id)}" data-item="tomato">${icon('tomato')} 番茄</button>
+    <button data-act="interact" data-to="${esc(target.id)}" data-item="bucket">${icon('bucket')} 水桶</button>
+    <button class="icon-close" data-act="closeProp" aria-label="关闭" title="关闭">${icon('close')}</button>
   </div>`;
 }
 
 function chatHtml(v) {
   const messages = (v.chat || []).map(message => `
     <div class="chat-message${message.playerId === v.myId ? ' mine' : ''}${message.quick ? ' quick-message' : ''}">
-      <b>${esc(message.name)}</b><span>${message.quick ? '🔊 ' : ''}${esc(message.text)}</span>
+      <b>${esc(message.name)}</b><span>${message.quick ? `<i class="quick-mark" aria-label="快捷语音">${icon('volume')}</i> ` : ''}${esc(message.text)}</span>
     </div>`).join('');
   const quick = QUICK_PHRASES.map(text => `<button data-act="quick" data-text="${esc(text)}">${esc(text)}</button>`).join('');
   return `<section class="chat-panel support-panel">
     <div class="chat-head"><b>房间聊天</b><div class="quick-phrases">${quick}</div></div>
     <div class="chat-messages">${messages || '<span class="chat-empty">还没有消息</span>'}</div>
     <div class="chat-compose">
-      <input data-chat-input maxlength="80" value="${esc(chatDraft)}" placeholder="输入消息" autocomplete="off">
-      <button class="primary" data-act="sendChat">发送</button>
+      <input data-chat-input maxlength="80" value="${esc(chatDraft)}" placeholder="输入消息" aria-label="聊天消息" autocomplete="off">
+      <button data-act="sendChat">发送</button>
     </div>
   </section>`;
 }
@@ -406,10 +428,10 @@ function turnClockHtml(v, mine) {
 
 function handLayout(groupCount) {
   const viewport = Number(globalThis.innerWidth) || 390;
-  if (viewport > 560) return { step: 70, width: 70, height: 100 };
-  const available = Math.max(320, viewport - 14);
-  const step = Math.max(29, Math.min(62, available / Math.max(1, groupCount)));
-  return { step: Math.round(step * 10) / 10, width: Math.round(Math.max(46, Math.min(62, step + 10))), height: 88 };
+  if (viewport > 560) return { step: 68, width: 68, height: 96 };
+  const available = Math.max(240, viewport - 64);
+  const step = Math.max(24, Math.min(52, (available - 52) / Math.max(1, groupCount - 1)));
+  return { step: Math.floor(step / 2) * 2, width: 52, height: 80 };
 }
 
 function updateTurnClocks() {
@@ -443,7 +465,7 @@ export function showInteraction(event) {
   const endY = targetRect.top + targetRect.height / 2;
   const flight = document.createElement('div');
   flight.className = 'prop-flight';
-  flight.textContent = event.item === 'tomato' ? '🍅' : '🪣';
+  flight.innerHTML = icon(event.item === 'tomato' ? 'tomato' : 'bucket');
   flight.style.left = `${startX}px`;
   flight.style.top = `${startY}px`;
   document.body.appendChild(flight);
@@ -451,12 +473,12 @@ export function showInteraction(event) {
     { transform: 'translate(-50%, -50%) scale(.65) rotate(0)' },
     { transform: `translate(calc(-50% + ${endX - startX}px), calc(-50% + ${endY - startY - 65}px)) scale(1.25) rotate(180deg)`, offset: .65 },
     { transform: `translate(calc(-50% + ${endX - startX}px), calc(-50% + ${endY - startY}px)) scale(.9) rotate(360deg)` },
-  ], { duration: 900, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'forwards' });
+  ], { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 700, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' });
   animation.onfinish = () => {
     flight.remove();
     const impact = document.createElement('div');
     impact.className = `prop-impact ${event.item}`;
-    impact.textContent = event.item === 'tomato' ? '啪！' : '哗！';
+    impact.textContent = event.item === 'tomato' ? '啪' : '哗';
     impact.style.left = `${endX}px`;
     impact.style.top = `${endY}px`;
     document.body.appendChild(impact);
@@ -477,8 +499,8 @@ function resultHtml(v) {
   const btns = v.isHost
     ? '<button class="primary big" data-act="next">下一局</button><button data-act="lobby">返回大厅</button>'
     : '<p class="tip">等待房主开始下一局…</p>';
-  return `<div class="overlay"><div class="panel">
-    <h2>${win}${r.solo && !r.zeroRound ? '（独庄 ×2）' : ''}</h2>
+  return `<div class="overlay"><div class="panel" role="dialog" aria-modal="true" aria-labelledby="result-title">
+    <h2 id="result-title">${win}${r.solo && !r.zeroRound ? '（独庄 ×2）' : ''}</h2>
     <p class="tip" style="text-align:center">本局黑五：${b5name}${r.solo ? '（庄家自持黑桃5，独庄）' : ''}</p>
     <table>
       <thead><tr><th>名次</th><th>玩家</th><th>阵营</th><th>本局</th><th>总分</th></tr></thead>

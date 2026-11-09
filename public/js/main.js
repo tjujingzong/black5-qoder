@@ -1,10 +1,12 @@
 // 入口：首页交互 + 房间实时连接装配。
-import { createRoom, RoomNet } from './net.js?v=20261012g';
-import { init as initUI, render, bindSend, toast, setRoomInfo, showInteraction } from './ui.js?v=20261012g';
-import { gameAudio } from './audio.js?v=20261012g';
-import { VoiceChat } from './voice.js?v=20261012g';
+import { createRoom, RoomNet } from './net.js?v=20261109a';
+import { init as initUI, render, bindSend, toast, setRoomInfo, showInteraction } from './ui.js?v=20261109a';
+import { gameAudio } from './audio.js?v=20261109a';
+import { VoiceChat } from './voice.js?v=20261109a';
+import { icon } from './icons.js?v=20261109a';
 
 const $ = selector => document.querySelector(selector);
+document.querySelectorAll('[data-icon]').forEach(element => { element.innerHTML = icon(element.dataset.icon); });
 initUI();
 gameAudio.init();
 
@@ -23,9 +25,8 @@ const voiceChat = new VoiceChat({
     button.disabled = busy;
     button.classList.toggle('active', speaking);
     button.setAttribute('aria-pressed', String(speaking));
-    const icon = button.querySelector('span');
-    if (icon) icon.textContent = speaking ? '🎙' : '🎤';
-    else button.textContent = speaking ? '🎙' : '🎤';
+    const iconElement = button.querySelector('span');
+    if (iconElement) iconElement.innerHTML = icon(speaking ? 'mic' : 'mic-off');
     // 开麦=说话；未开麦时仍在"听"（进入房间自动收听，无需麦克风）
     let label;
     if (busy) label = '正在开麦…';
@@ -57,7 +58,7 @@ function setCreateBusy(busy, label = '创建房间') {
 
 function setJoinBusy(busy, label = '加入房间') {
   $('#btn-join').disabled = busy;
-  $('#btn-join').textContent = busy ? label : '加入房间';
+  $('#btn-join').textContent = busy ? label : '加入';
 }
 
 function resetHomeButtons() {

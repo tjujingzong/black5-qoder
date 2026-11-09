@@ -4,27 +4,37 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>挤黑五 · 在线联机</title>
+<meta name="theme-color" content="#141716">
+<meta name="description" content="和朋友在线玩挤黑五，找到持有黑桃 5 的秘密队友，创建房间即可开局">
 <link rel="icon" href="/avatars/tiger.png" type="image/png">
-<link rel="stylesheet" href="css/style.css?v=20260813i">
+<link rel="stylesheet" href="css/style.css?v=20261109a">
 </head>
 <body>
 
 <!-- 首页：创建 / 加入房间 -->
 <section id="screen-home" class="screen home">
   <div class="home-brand">
-    <div class="brand-mark" aria-hidden="true"><span>♠</span><b>5</b></div>
-    <div><h1>挤黑五</h1><p class="sub">在线牌局</p></div>
+    <div class="brand-row"><div class="brand-mark" aria-hidden="true"><span>♠</span><b>5</b></div><div><h1>挤黑五</h1><p class="sub">和朋友，线上同桌</p></div></div>
+    <h2 class="home-title">一张黑桃 5<br>一位秘密队友</h2>
+    <p class="home-description">熟悉的牌局，藏着一点默契<br>创建房间，邀朋友坐下就开玩</p>
   </div>
   <div class="home-card" aria-label="进入牌局">
+    <div class="entry-heading"><h2>入座开一局</h2><p>无需注册，用昵称加入牌桌</p></div>
     <label for="inp-name">昵称</label>
     <input id="inp-name" maxlength="8" placeholder="输入你的昵称" autocomplete="nickname">
     <button id="btn-create" class="primary big">创建房间</button>
     <div class="divider"><span>加入已有房间</span></div>
     <div class="join-row">
-      <input id="inp-code" maxlength="5" placeholder="5 位房间号" aria-label="房间号" autocomplete="off">
+      <input id="inp-code" maxlength="5" placeholder="5 位房间号" aria-label="房间号" autocomplete="off" autocapitalize="characters" spellcheck="false">
       <button id="btn-join" class="big">加入</button>
     </div>
   </div>
+  <figure class="home-scene" aria-label="黑桃 5 牌面：持有它的人是庄家的秘密队友">
+    <div class="scene-card scene-back" aria-hidden="true"><span>4<br>♣</span></div>
+    <div class="scene-card scene-red" aria-hidden="true"><span>6<br>♥</span></div>
+    <div class="scene-card scene-five" aria-hidden="true"><span class="scene-corner">5<br>♠</span><div class="pips"><i>♠</i><i>♠</i><i>♠</i><i>♠</i><i>♠</i></div><span class="scene-corner scene-bottom">5<br>♠</span></div>
+    <figcaption><span>♠ 5</span> 隐藏身份，等你揭晓</figcaption>
+  </figure>
   <details class="rules">
     <summary>游戏规则</summary>
     <ul>
@@ -43,20 +53,20 @@
 <!-- 房间页：大厅 / 对局 -->
 <section id="screen-room" class="screen hidden">
   <header class="room-head">
-    <div class="rc room-ident"><span>房间</span><b id="room-code"></b>
-      <button id="btn-copy" class="mini copy-button" title="复制邀请链接"><span aria-hidden="true">⧉</span><em>复制邀请</em></button>
+    <div class="rc room-ident"><div class="room-brand" aria-label="挤黑五">♠<b>5</b></div><span>房间</span><b id="room-code"></b>
+      <button id="btn-copy" class="mini copy-button" title="复制邀请链接"><span data-icon="copy" aria-hidden="true"></span><em>复制邀请</em></button>
     </div>
     <div class="rc room-tools">
-      <button id="btn-voice" class="mini voice-toggle" aria-label="开启语音" title="开启语音" aria-pressed="false"><span>🎤</span><em>语音</em></button>
-      <button id="btn-music" class="mini sound-toggle music-toggle" aria-label="关闭背景音乐" title="关闭背景音乐" aria-pressed="true"><span>♫</span><em>BGM</em></button>
-      <button id="btn-effects" class="mini sound-toggle effects-toggle" aria-label="关闭牌局音效" title="关闭牌局音效" aria-pressed="true"><span>🔊</span><em>音效</em></button>
+      <button id="btn-voice" class="mini voice-toggle" aria-label="开启语音" title="开启语音" aria-pressed="false"><span data-icon="mic-off" aria-hidden="true"></span><em>语音</em></button>
+      <button id="btn-music" class="mini sound-toggle music-toggle" aria-label="关闭背景音乐" title="关闭背景音乐" aria-pressed="true"><span data-icon="music" aria-hidden="true"></span><em>音乐</em></button>
+      <button id="btn-effects" class="mini sound-toggle effects-toggle" aria-label="关闭牌局音效" title="关闭牌局音效" aria-pressed="true"><span data-icon="volume" aria-hidden="true"></span><em>音效</em></button>
       <button id="btn-leave" class="mini leave-button">离开</button>
     </div>
   </header>
   <div id="room-body"></div>
 </section>
 
-<div id="toast"></div>
-<script type="module" src="js/main.js?v=20261012g"></script>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="js/main.js?v=20261109a"></script>
 </body>
 </html>
